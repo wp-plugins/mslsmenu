@@ -4,13 +4,13 @@
 Plugin Name: MslsMenu
 Plugin URI: https://github.com/lloc/MslsMenu
 Description: Adds the Multisite Language Switcher to the primary-nav-menu
-Version: 0.3.1
+Version: 1.1
 Author: Dennis Ploetner
 Author URI: http://lloc.de/
 */
 
 /*
- Copyright 2013  Dennis Ploetner  (email : re@lloc.de)
+Copyright 2014  Dennis Ploetner  (email : re@lloc.de)
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License, version 2, as
@@ -33,8 +33,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 class MslsMenu {
 
 	public function __construct() {
-		add_action( 'init',                array( $this, 'plugin_init' ) );
-		add_filter( 'wp_nav_menu_items',   array( $this, 'nav_item' ), 10, 2 );
+		add_action( 'init', array( $this, 'plugin_init' ) );
+		add_filter( 'wp_nav_menu_items', array( $this, 'nav_item' ), 10, 2 );
 		add_action( 'msls_admin_register', array( $this, 'admin_register' ) );
 	}
 
@@ -53,15 +53,18 @@ class MslsMenu {
 	/**
 	 * Callback for wp_nav_menu_items
 	 * @package mslsmenu
+	 *
 	 * @param string $items
-	 * @param array $args
+	 * @param StdClass $args
+	 *
 	 * @return string
 	 */
 	function nav_item( $items, $args ) {
 		if ( function_exists( 'the_msls' ) ) {
-			$options = MslsOptions::instance();
+			$options   = MslsOptions::instance();
+			$locations = (array) $options->mslsmenu_theme_location;
 
-			if ( $options->mslsmenu_theme_location == $args->theme_location ) {
+			if ( in_array( $args->theme_location, $locations ) ) {
 				$mslsmenu = '';
 
 				$obj = new MslsOutput;
@@ -72,6 +75,7 @@ class MslsMenu {
 				$items .= $options->mslsmenu_before_output . $mslsmenu . $options->mslsmenu_after_output;
 			}
 		}
+
 		return $items;
 	}
 
@@ -79,71 +83,68 @@ class MslsMenu {
 	/**
 	 * Callback for msls_admin_register
 	 * @package mslsmenu
+	 *
 	 * @param string $page
 	 */
 	function admin_register( $page ) {
-		add_settings_section( 'mslsmenu_section', __( 'Menu Settings' ), null, $page );
+		add_settings_section( 'mslsmenu_section', __( 'Menu Settings', 'mslsmenu' ), null, $page );
 
 		$args = array( 'msls_admin' => new MslsAdmin() );
 
-		add_settings_field(
-			'mslsmenu_theme_location',
-			__( 'Theme Location', 'msls' ),
-			array( $this, 'theme_location' ),
-			$page,
-			'mslsmenu_section',
-			$args
-		);
-		add_settings_field(
-			'mslsmenu_display',
-			__( 'Display', 'msls' ),
-			array( $this, 'display' ),
-			$page,
-			'mslsmenu_section',
-			$args
-		);
+		$callback = array( $this, 'theme_location' );
+		add_settings_field( 'mslsmenu_theme_location', __( 'Theme Location', 'mslsmenu' ), $callback, $page, 'mslsmenu_section', $args );
 
-		$fields = array(
-			'mslsmenu_before_output' => __( 'Text/HTML before the list', 'msls' ),
-			'mslsmenu_after_output'  => __( 'Text/HTML after the list', 'msls' ),
-			'mslsmenu_before_item'   => __( 'Text/HTML before each item', 'msls' ),
-			'mslsmenu_after_item'    => __( 'Text/HTML after each item', 'msls' ),
-		);
+		$callback = array( $this, 'display' );
+		add_settings_field( 'mslsmenu_display', __( 'Display', 'mslsmenu' ), $callback, $page, 'mslsmenu_section', $args );
 
+		$callback = array( $this, 'input' );
+		$fields   = array(
+			'mslsmenu_before_output' => __( 'Text/HTML before the list', 'mslsmenu' ),
+			'mslsmenu_after_output'  => __( 'Text/HTML after the list', 'mslsmenu' ),
+			'mslsmenu_before_item'   => __( 'Text/HTML before each item', 'mslsmenu' ),
+			'mslsmenu_after_item'    => __( 'Text/HTML after each item', 'mslsmenu' ),
+		);
 		foreach ( $fields as $id => $label ) {
 			$args['mslsmenu_input'] = $id;
-			add_settings_field(
-				$id,
-				$label,
-				array( $this, 'input' ),
-				$page,
-				'mslsmenu_section',
-				$args
-			);
+			add_settings_field( $id, $label, $callback, $page, 'mslsmenu_section', $args );
 		}
 	}
 
 	/**
 	 * Callback for mslsmenu_theme_location
 	 * @package mslsmenu
+	 *
 	 * @param array $args
 	 */
 	function theme_location( $args ) {
-		$locations = array( 0 => '' );
+		$locations = array();
 		foreach ( get_nav_menu_locations() as $key => $value ) {
 			$locations[ $key ] = $key;
 		}
 
-		echo $args['msls_admin']->render_select(
+		$options  = array();
+		$selected = (array) MslsOptions::instance()->mslsmenu_theme_location;
+		error_log( print_r( $selected, true ) );
+		foreach ( $locations as $value => $description ) {
+			$options[] = sprintf(
+				'<option value="%s" %s>%s</option>',
+				$value,
+				selected( true, ( in_array( $value, $selected ) ), false ),
+				$description
+			);
+		}
+
+		printf(
+			'<select id="%1$s" name="msls[%1$s][]" multiple="multiple">%2$s</select>',
 			'mslsmenu_theme_location',
-			$locations,
-			MslsOptions::instance()->mslsmenu_theme_location
+			implode( '', $options )
 		); // xss ok
 	}
 
 	/**
 	 * Callback for mslsmenu_display
 	 * @package mslsmenu
+	 *
 	 * @param array $args
 	 */
 	function display( $args ) {
@@ -157,6 +158,7 @@ class MslsMenu {
 	/**
 	 * Callback for mslsmenu text-inputs
 	 * @package mslsmenu
+	 *
 	 * @param array $args
 	 */
 	function input( $args ) {
@@ -164,4 +166,5 @@ class MslsMenu {
 	}
 
 }
-$mslsmenu = new MslsMenu(); 
+
+$mslsmenu = new MslsMenu();
