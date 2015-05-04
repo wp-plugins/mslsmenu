@@ -4,8 +4,8 @@ Contributors: realloc
 Donate link: http://www.greenpeace.org/international/
 Tags: multilingual, multisite, language, switcher, international, localization, i18n, menu, nav_menu
 Requires at least: 3.6.1
-Tested up to: 4.1
-Stable tag: 0.3.1
+Tested up to: 4.2
+Stable tag: 1.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -21,7 +21,9 @@ But this can lead to fatal errors if you don't know much about PHP, or maybe the
 
 * Download the plugin and uncompress it with your preferred unzip programme
 * Copy the entire directory in your plugin directory of your WordPress blog (/wp-content/plugins)
+* Activate the plugin
 * You will find the configuration of the plugin once in each blog in Settings -> Multisite Language Switcher
+* Set the the menu specific options such as `<li class="mslsl-menu">` before the item-ouitput or the description. Please, check the Screenshots-section too!
 
 == Screenshots ==
 
@@ -31,6 +33,14 @@ But this can lead to fatal errors if you don't know much about PHP, or maybe the
 4. Output in the primary nav menu
 
 == Changelog ==
+
+= 1.1 =
+* selector for multiple menus added
+
+= 1.0 =
+* marked as stable
+* WordPress Coding Standards
+* PHPDocs
 
 = 0.3.1 =
 * check for 'the_msls' was too early
