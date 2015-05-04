@@ -4,7 +4,7 @@
 Plugin Name: MslsMenu
 Plugin URI: https://github.com/lloc/MslsMenu
 Description: Adds the Multisite Language Switcher to the primary-nav-menu
-Version: 1.1
+Version: 1.2
 Author: Dennis Ploetner
 Author URI: http://lloc.de/
 */
@@ -122,9 +122,15 @@ class MslsMenu {
 			$locations[ $key ] = $key;
 		}
 
-		$options  = array();
 		$selected = (array) MslsOptions::instance()->mslsmenu_theme_location;
 
+		$options  = array(
+			sprintf(
+				'<option value="" %s>%s</option>',
+				selected( true, ( in_array( '', $selected ) ), false ),
+				__( '-- empty --', 'mslsmenu' )
+			)
+		);
 		foreach ( $locations as $value => $description ) {
 			$options[] = sprintf(
 				'<option value="%s" %s>%s</option>',
